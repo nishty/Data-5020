@@ -1,0 +1,214 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+# load needed libraries 
+```{r}
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(moments)
+library(caret)
+```
+
+# Q1 Load the data 
+```{r}
+df <- read_csv("https://s3.amazonaws.com/nyc-tlc/trip+data/green_tripdata_2020-02.csv")
+df <- data.frame(df)
+glimpse(df)
+```
+# review the dataframe statistical properties
+```{r}
+summary(df)
+
+```
+# check all variables class 
+```{r}
+#finding the datatypes of columns
+sapply(df,class)
+```
+
+# review the distribution of the continous variables (trip_distance, fare_amount)
+```{r}
+#Overlaying the normal curve on the histogram of fare_amount
+
+ggplot(df,aes(x=fare_amount))+
+  geom_histogram(aes(y=..density..))+
+  stat_function(fun=dnorm, args = list(mean = mean(df$fare_amount),
+  sd = sd(df$fare_amount)), colour ='red', size =1)
+
+skewness(df$fare_amount)
+# it shows that the far_amount is not normal and it is right skewed.
+
+
+#Overlaying the normal curve on the histogram of log10(trip_distance)
+
+ggplot(df,aes(x=log10(trip_distance)))+
+  geom_histogram(aes(y=..density..))+
+  stat_function(fun=dnorm, args = list(mean = log10(mean(df$trip_distance)),
+  sd = log10(sd(df$trip_distance))), colour ='red', size =1)
+
+skewness(df$trip_distance)
+# it shows that the trip_distance is not normal at all and it is highly right skewed.
+
+
+#Overlaying the normal curve on the histogram of tip_amount
+
+ggplot(df,aes(x=tip_amount))+
+  geom_histogram(aes(y=..density..))+
+  stat_function(fun=dnorm, args = list(mean = mean(df$tip_amount),
+  sd = sd(df$tip_amount)), colour ='red', size =1)
+
+skewness(df$tip_amount)
+# it shows that the tip_amount is not normal at all and it is highly right skewed
+```
+# correlation 
+```{r}
+library(corrplot)
+library(RColorBrewer)
+M <-cor(df[, -c(2,3,4)])
+corrplot(M, type="upper", order="hclust",
+         col=brewer.pal(n=10, name="RdYlBu"))
+# from what we can see in the plot below, the payment_type and  mta_tax, and congestion_surcharge and PULocationID and Vender ID and extra and total_amount has stronger correlation in comepare to the rset of the variables. so I would choose them as feature variables. (payment_type and  mta_tax, and congestion_surcharge and PULocationID and Vender ID and extra and total_amount)
+```
+
+
+# find coloumns (variables) contains missing values NA
+# handle each missing case
+```{r}
+for (col in colnames(df)) {
+
+  if (any(is.na(df[,col]))) { 
+  print(col) } 
+}
+
+# so by looking at the result, we can see that there are 8 variables, for each of these variables we will explore the data and handle the missing value. 
+
+# Vender ID variable 
+Vender_ID_missing <- sum(is.na(df$VendorID))
+table(df$VendorID)
+# there are 80893 observation that has missing value for Vender ID. Vender Id is a categorical variables that has 2 levels (1 & 2). as the number o missing value is high, it is not good idea to remove (dismiss) missing values. Instead as it is a categorical variable, we can replace NA with the most frequent value of that variable. in this case (2) is most frequent(265035 occurrence). so we will replace all NA with value 2. 
+df$VendorID[which(is.na(df$VendorID))] <- 2
+
+
+
+# "store_and_fwd_flag" variable - categorical variable with 2 levels Y&N mode of "N"
+store_and_fwd_flag_missing <- sum(is.na(df$store_and_fwd_flag))
+table(df$store_and_fwd_flag)
+df$store_and_fwd_flag[which(is.na(df$store_and_fwd_flag))] <- "N"
+table(df$store_and_fwd_flag)
+
+# "RatecodeID" variable - categorical variable with 7 levels (1,2,3,4,5,6,99) mode of 1
+RatecodeID_missing <- sum(is.na(df$RatecodeID))
+table(df$RatecodeID)
+df$RatecodeID[which(is.na(df$RatecodeID))] <- 1
+table(df$RatecodeID)
+
+
+# "passenger_count" variable - categorical variable with 9 levels (0:8), mode of 1
+passenger_count_missing <- sum(is.na(df$passenger_count))
+table(df$passenger_count)
+df$passenger_count[which(is.na(df$passenger_count))] <- 1
+table(df$passenger_count)
+
+
+
+# "payment_type" variable - categorical variable with 5 levels (1:5), mode of 1
+payment_type_missing <- sum(is.na(df$payment_type))
+table(df$payment_type)
+df$payment_type[which(is.na(df$payment_type))] <- 1
+table(df$payment_type)
+
+# "payment"trip_type" variable - categorical variable with 2 levels (1&2), mode of 1
+trip_type_missing <- sum(is.na(df$trip_type))
+table(df$trip_type)
+df$trip_type[which(is.na(df$trip_type))] <- 1
+table(df$trip_type)
+
+# "congestion_surcharge" variable - categorical variable with 4 levels (0, 0.75, 2.5, 2.75), mode of 0
+congestion_surcharge_missing <- sum(is.na(df$congestion_surcharge))
+table(df$congestion_surcharge)
+df$congestion_surcharge[which(is.na(df$congestion_surcharge))] <- 0
+table(df$congestion_surcharge)
+
+unique(df$ehail_fee)
+# the 'ehail_fee' coloumn is all NA and the coloumn should be filter. 
+df = select(df, -ehail_fee)
+
+# check the clean df to see if there is any NA left. there is no missing value in the df. 
+sum(is.na(df))
+```
+
+
+
+
+# Outliers 
+```{r}
+# Creating a data frame of z-score all values
+
+z_score <- as.data.frame(sapply(df[,9:19], function(z) (abs(z-mean(z))/sd(z))))
+#z_score$Outcome <- diabetes$Outcome
+#view(z_score)
+
+# Finding the outliers in each column ( values more than 3 sd)
+Outliers <- function(data){
+  result <- which(abs(data)>3)
+  length(result)
+}
+
+apply(z_score,2,Outliers)
+# showing the outliers in a boxplot
+ggplot(df,aes(y = df$tip_amount))+ geom_boxplot(outlier.color = 'red')
+```
+# featire selection 
+```{r}
+library(corrplot)
+cor(df$tip_amount, ~.)
+corrplot(cor(df[,seq(7,12)]), diag = FALSE, type="upper",addCoef.col = "black")
+```
+
+
+# normalize the continous variables 
+```{r}
+normalize <- function(x) {
+return((x - min(x)) / (max(x) - min(x))) }
+
+df$trip_distance <- normalize(df$trip_distance)
+df$tolls_amount <- normalize(df$tolls_amount)
+df$tip_amount <- normalize(df$tip_amount)
+df$fare_amount <- normalize(df$fare_amount)
+df$total_amount <- normalize(df$total_amount)
+df$extra <- normalize(df$extra)
+summary(df)
+
+```
+# Encode the categorical varibales 
+```{r}
+df$store_and_fwd_flag <- as.numeric(factor(df$store_and_fwd_flag))
+table(df$store_and_fwd_flag)
+
+df$VendorID <- factor(df$VendorID)
+df$RatecodeID <- factor(df$RatecodeID)
+df$PULocationID <- factor(df$PULocationID)
+df$DOLocationID <- factor(df$DOLocationID)
+df$passenger_count <- factor(df$passenger_count)
+df$mta_tax <- factor(df$mta_tax)
+df$improvement_surcharge <- factor(df$improvement_surcharge)
+df$payment_type <- factor(df$payment_type)
+df$trip_type <- factor(df$trip_type)
+df$congestion_surcharge <- factor(df$congestion_surcharge)
+```
+
+# prepare the data for modeling 
+
+```{r}
+set.seed(7654) 
+train_split <- sample.int(n = nrow(df), size = floor(.80*nrow(df)), replace = F) 
+test_split <- sample.int(n = nrow(df), size = floor(.20*nrow(df)), replace = F) 
+train_Data <- df[train_split,] 
+test_Data <- df[test_split,] 
+# we think that to have 80% of the data for training purpose so we have enough data for training a good model. in a same time 20% for test is good number of tests and we can have a good evaluation as the data has total 398632 observations. 
+```
+
