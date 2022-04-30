@@ -64,14 +64,30 @@ ggplot(df,aes(x=tip_amount))+
 skewness(df$tip_amount)
 # it shows that the tip_amount is not normal at all and it is highly right skewed
 ```
+# filter the variable that does not seem to be promissing for predicting the tip_amount 
+# the coloumn 
+```{r}
+unique(df$ehail_fee)
+# the 'ehail_fee' coloumn is all NA and the coloumn should be filter. 
+df = select(df, -ehail_fee)
+```
+
 # correlation 
 ```{r}
 library(corrplot)
 library(RColorBrewer)
-M <-cor(df[, -c(2,3,4)])
+M <-cor(df[, -c(2,3,4)], use="complete.obs")
 corrplot(M, type="upper", order="hclust",
          col=brewer.pal(n=10, name="RdYlBu"))
 # from what we can see in the plot below, the payment_type and  mta_tax, and congestion_surcharge and PULocationID and Vender ID and extra and total_amount has stronger correlation in comepare to the rset of the variables. so I would choose them as feature variables. (payment_type and  mta_tax, and congestion_surcharge and PULocationID and Vender ID and extra and total_amount)
+
+cor(df$tip_amount, df[, c(1,5,6,7,8,9,10,11)], use="complete.obs")
+cor(df$tip_amount, df[, c(12,14,15,16,17,18,19)], use="complete.obs")
+
+# by looking at the results of the correlations between the tip_ampunt and the rest of the variables, it seems that the tip_amount has stronger correlations to these variables: fare_amount, payment_type, total_amount, congestion_surcharge, toll_amount, extra, DOLocationID . if I want to choose significant variables for predicting the tip_amount, we would choose are_amount, payment_type, total_amount, congestion_surcharge, toll_amount, extra, DOLocationID. 
+
+
+
 ```
 
 
@@ -85,6 +101,7 @@ for (col in colnames(df)) {
 }
 
 # so by looking at the result, we can see that there are 8 variables, for each of these variables we will explore the data and handle the missing value. 
+# the 'ehail_fee' column is all NA and the column should be filter.
 
 # Vender ID variable 
 Vender_ID_missing <- sum(is.na(df$VendorID))
@@ -162,11 +179,12 @@ apply(z_score,2,Outliers)
 # showing the outliers in a boxplot
 ggplot(df,aes(y = df$tip_amount))+ geom_boxplot(outlier.color = 'red')
 ```
-# featire selection 
+# feature selection 
 ```{r}
-library(corrplot)
-cor(df$tip_amount, ~.)
-corrplot(cor(df[,seq(7,12)]), diag = FALSE, type="upper",addCoef.col = "black")
+
+# we filter the variable "ehail" as it was all NA. in above by considering the result of the correlation between tip_amount and rest of the variables, we find out that variables "trip_distance", "fare_amount", "extra", "tip_amount", "tolls_amount" has stronger correlation and should be used for training a model. 
+#please see lines (80-90)
+
 ```
 
 
@@ -209,6 +227,6 @@ train_split <- sample.int(n = nrow(df), size = floor(.80*nrow(df)), replace = F)
 test_split <- sample.int(n = nrow(df), size = floor(.20*nrow(df)), replace = F) 
 train_Data <- df[train_split,] 
 test_Data <- df[test_split,] 
-# we think that to have 80% of the data for training purpose so we have enough data for training a good model. in a same time 20% for test is good number of tests and we can have a good evaluation as the data has total 398632 observations. 
+# we think that to have 80% of the data for training purpose so we have enough data for training a good model. in a same time 20% for test is good number of tests and we can have a good evaluation as the data has total 398632 observations. this way we have enough data for both testing an training.
 ```
 
