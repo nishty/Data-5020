@@ -2,7 +2,9 @@
 title: "R Notebook"
 output: html_notebook
 ---
-# load needed libraries 
+
+# load needed libraries
+
 ```{r}
 library(readr)
 library(ggplot2)
@@ -13,24 +15,29 @@ library(moments)
 library(caret)
 ```
 
-# Q1 Load the data 
+# Q1 Load the data
+
 ```{r}
 df <- read_csv("https://s3.amazonaws.com/nyc-tlc/trip+data/green_tripdata_2020-02.csv")
 df <- data.frame(df)
 glimpse(df)
 ```
+
 # review the dataframe statistical properties
+
 ```{r}
 summary(df)
-
 ```
-# check all variables class 
+
+# check all variables class
+
 ```{r}
 #finding the datatypes of columns
 sapply(df,class)
 ```
 
 # review the distribution of the continous variables (trip_distance, fare_amount)
+
 ```{r}
 #Overlaying the normal curve on the histogram of fare_amount
 
@@ -64,15 +71,7 @@ ggplot(df,aes(x=tip_amount))+
 skewness(df$tip_amount)
 # it shows that the tip_amount is not normal at all and it is highly right skewed
 ```
-# filter the variable that does not seem to be promissing for predicting the tip_amount 
-# the coloumn 
-```{r}
-unique(df$ehail_fee)
-# the 'ehail_fee' coloumn is all NA and the coloumn should be filter. 
-df = select(df, -ehail_fee)
-```
 
-# correlation 
 ```{r}
 library(corrplot)
 library(RColorBrewer)
@@ -90,9 +89,10 @@ cor(df$tip_amount, df[, c(12,14,15,16,17,18,19)], use="complete.obs")
 
 ```
 
-
 # find coloumns (variables) contains missing values NA
+
 # handle each missing case
+
 ```{r}
 for (col in colnames(df)) {
 
@@ -158,10 +158,8 @@ df = select(df, -ehail_fee)
 sum(is.na(df))
 ```
 
+# Outliers
 
-
-
-# Outliers 
 ```{r}
 # Creating a data frame of z-score all values
 
@@ -179,7 +177,7 @@ apply(z_score,2,Outliers)
 # showing the outliers in a boxplot
 ggplot(df,aes(y = df$tip_amount))+ geom_boxplot(outlier.color = 'red')
 ```
-# feature selection 
+
 ```{r}
 
 # we filter the variable "ehail" as it was all NA. in above by considering the result of the correlation between tip_amount and rest of the variables, we find out that variables "trip_distance", "fare_amount", "extra", "tip_amount", "tolls_amount" has stronger correlation and should be used for training a model. 
@@ -187,8 +185,8 @@ ggplot(df,aes(y = df$tip_amount))+ geom_boxplot(outlier.color = 'red')
 
 ```
 
+# normalize the continous variables
 
-# normalize the continous variables 
 ```{r}
 normalize <- function(x) {
 return((x - min(x)) / (max(x) - min(x))) }
@@ -202,7 +200,9 @@ df$extra <- normalize(df$extra)
 summary(df)
 
 ```
-# Encode the categorical varibales 
+
+# Encode the categorical varibales
+
 ```{r}
 df$store_and_fwd_flag <- as.numeric(factor(df$store_and_fwd_flag))
 table(df$store_and_fwd_flag)
@@ -219,7 +219,7 @@ df$trip_type <- factor(df$trip_type)
 df$congestion_surcharge <- factor(df$congestion_surcharge)
 ```
 
-# prepare the data for modeling 
+# prepare the data for modeling
 
 ```{r}
 set.seed(7654) 
@@ -230,3 +230,47 @@ test_Data <- df[test_split,]
 # we think that to have 80% of the data for training purpose so we have enough data for training a good model. in a same time 20% for test is good number of tests and we can have a good evaluation as the data has total 398632 observations. this way we have enough data for both testing an training.
 ```
 
+## Q4. 
+
+Only logic is coded. Unavailable now.
+
+### Determine the optimized parameter k
+
+```{r}
+# create func to calc mse
+metric_mse = function(pred, ori){
+  t_t = cbind(pred, ori)
+  mse = sum((t_t[,1] - t_t[,2]) ** 2) / length(t_t)
+  return(mse)
+}
+
+knn_tester = function(x, Y, K){
+  ret = vector()
+  for(k in K){
+    pred = knn.predict(x, k)
+    ret = c(ret, metric_mse(pred, Y))
+  }
+  return(ret)
+}
+
+k_center_sqrt = function(k, n, step){
+  n = as.integer(n/2)
+  return(
+    seq(k-n, k+n, step)
+  )
+}
+
+# calc mse for both train and test data with given list of k
+
+k_sqrt = sqrt(dim(train.x)[1])
+k = k_center_sqrt(k_sqrt, 20, 2)
+mse_train = knn_tester(train_x, train_y, k)
+mse_test = knn_tester(test_x, test_y, k)
+plot.data = tibble(K=k, mse_train, mse_test)
+plot.train.k = 
+  ggplot(plot.data) + 
+  geom_line(aes(x=K, y=mse_train)) + 
+  geom_line(aes(x=K, y=mse_test))
+  
+
+```
