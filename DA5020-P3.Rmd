@@ -229,6 +229,29 @@ train_Data <- df[train_split,]
 test_Data <- df[test_split,] 
 # we think that to have 80% of the data for training purpose so we have enough data for training a good model. in a same time 20% for test is good number of tests and we can have a good evaluation as the data has total 398632 observations. this way we have enough data for both testing an training.
 ```
+# Q3
+
+#Function Knn
+
+knn.predict <- function(data_train,data_test,predictor_var, k) {
+
+trainingRowIndex <- sample(1:nrow(df), 0.75*nrow(df))
+data_train <- df[trainingRowIndex, ] 
+data_test  <- df[-trainingRowIndex, ]
+dtrain.x <- dtrain %>% select(-predictor_var)
+dtrain.y <- dtrain %>% select(predictor_var) 
+dtest.x <- dtest %>% select(-predictor_var) 
+dtest.y <- dtest %>% select(predictor_var)
+pred.a <- FNN::knn.reg(dtrain.x, dtest.x, dtrain.y, k)
+dtest.y.results <- dtest.y
+dtest.y.results$k5.pred <- pred.a$pred
+rmse<-rmse(dtest.y.results$mpg,dtest.y.results$k5.pred)
+MSE<-(rmse)^2
+return(MSE)
+}
+
+knn.predict(data_train, data_test,'mpg',5)
+
 
 ## Q4. 
 
