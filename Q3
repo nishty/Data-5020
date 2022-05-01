@@ -1,0 +1,20 @@
+#Function Knn
+
+knn.predict <- function(data_train,data_test,predictor_var, k) {
+
+trainingRowIndex <- sample(1:nrow(df), 0.75*nrow(df))
+data_train <- df[trainingRowIndex, ] 
+data_test  <- df[-trainingRowIndex, ]
+dtrain.x <- dtrain %>% select(-predictor_var)
+dtrain.y <- dtrain %>% select(predictor_var) 
+dtest.x <- dtest %>% select(-predictor_var) 
+dtest.y <- dtest %>% select(predictor_var)
+pred.a <- FNN::knn.reg(dtrain.x, dtest.x, dtrain.y, k)
+dtest.y.results <- dtest.y
+dtest.y.results$k5.pred <- pred.a$pred
+rmse<-rmse(dtest.y.results$mpg,dtest.y.results$k5.pred)
+MSE<-(rmse)^2
+return(MSE)
+}
+
+knn.predict(data_train, data_test,'mpg',5)
