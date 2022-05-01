@@ -71,6 +71,12 @@ ggplot(df,aes(x=tip_amount))+
 skewness(df$tip_amount)
 # it shows that the tip_amount is not normal at all and it is highly right skewed
 ```
+# find coloumns (variables) contains missing values NA
+# the 'ehail_fee' coloumn is all NA and the coloumn should be filter. 
+```{r}
+df = select(df, -ehail_fee)
+```
+
 
 ```{r}
 library(corrplot)
