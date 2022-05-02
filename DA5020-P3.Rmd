@@ -99,7 +99,7 @@ corrplot(M, type="upper", order="hclust",
 # from what we can see in the plot below, the payment_type and  mta_tax, and congestion_surcharge and PULocationID and Vender ID and extra and total_amount has stronger correlation in comepare to the rset of the variables. so I would choose them as feature variables. (payment_type and  mta_tax, and congestion_surcharge and PULocationID and Vender ID and extra and total_amount)
 
 cor(df$tip_amount, df[, c(1,5,6,7,8,9,10,11)], use="complete.obs")
-cor(df$tip_amount, df[, c(12,14,15,16,17,18,19)], use="complete.obs")
+cor(df$tip_amount, df[, c(12,14,15,16,17,18)], use="complete.obs")
 
 # by looking at the results of the correlations between the tip_ampunt and the rest of the variables, it seems that the tip_amount has stronger correlations to these variables: fare_amount, payment_type, total_amount, congestion_surcharge, toll_amount, extra, DOLocationID . if I want to choose significant variables for predicting the tip_amount, we would choose are_amount, payment_type, total_amount, congestion_surcharge, toll_amount, extra, DOLocationID. 
 
