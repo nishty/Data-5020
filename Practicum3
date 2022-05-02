@@ -210,6 +210,19 @@ apply(z_score,2,Outliers)
 # showing the outliers in a boxplot
 ggplot(df,aes(y = df$tip_amount))+ geom_boxplot(outlier.color = 'red')
 ```
+```{r}
+
+# imputing the outliers , as the data is huge and number of outlier comapre to the dimension of the data is not that bug, we will remove all outliers from the data 
+Outliers_r <- function(data){
+  result <- which(abs(data)>3)
+  result
+}
+
+out <- apply(z_score,2,Outliers_r)
+dim(df)
+df <- df[- unlist(out),]
+dim(df)
+```
 
 ```{r}
 # we filter the variable "ehail" as it was all NA. in above by considering the result of the correlation between tip_amount and rest of the variables, we find out that variables "trip_distance", "fare_amount", "extra", "tip_amount", "tolls_amount" has stronger correlation and should be used for training a model. 
