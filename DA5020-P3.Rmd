@@ -176,11 +176,64 @@ unique(df$ehail_fee)
 sum(is.na(df))
 ```
 
+# review the distribution of the continous variables (trip_distance, fare_amount)
+
+```{r}
+#Overlaying the normal curve on the histogram of fare_amount
+
+ggplot(df,aes(x=fare_amount))+
+  geom_histogram(aes(y=..density..))+
+  stat_function(fun=dnorm, args = list(mean = mean(df$fare_amount),
+  sd = sd(df$fare_amount)), colour ='red', size =1)
+
+skewness(df$fare_amount)
+# it shows that the far_amount is not normal and it is right skewed.
+
+
+#Overlaying the normal curve on the histogram of log10(trip_distance)
+
+ggplot(df,aes(x=log10(trip_distance)))+
+  geom_histogram(aes(y=..density..))+
+  stat_function(fun=dnorm, args = list(mean = log10(mean(df$trip_distance)),
+  sd = log10(sd(df$trip_distance))), colour ='red', size =1)
+
+skewness(df$trip_distance)
+# it shows that the trip_distance is not normal at all and it is highly right skewed.
+
+
+#Overlaying the normal curve on the histogram of tip_amount
+
+ggplot(df,aes(x=tip_amount))+
+  geom_histogram(aes(y=..density..))+
+  stat_function(fun=dnorm, args = list(mean = mean(df$tip_amount),
+  sd = sd(df$tip_amount)), colour ='red', size =1)
+
+skewness(df$tip_amount)
+# it shows that the tip_amount is not normal at all and it is highly right skewed
+```
+
+```{r}
+library(corrplot)
+library(RColorBrewer)
+M <-cor(df[, -c(2,3,4)], use="complete.obs")
+corrplot(M, type="upper", order="hclust",
+         col=brewer.pal(n=10, name="RdYlBu"))
+# from what we can see in the plot below, the payment_type and  mta_tax, and congestion_surcharge and PULocationID and Vender ID and extra and total_amount has stronger correlation in comepare to the rset of the variables. so I would choose them as feature variables. (payment_type and  mta_tax, and congestion_surcharge and PULocationID and Vender ID and extra and total_amount)
+
+cor(df$tip_amount, df[, c(1,5,6,7,8,9,10,11)], use="complete.obs")
+cor(df$tip_amount, df[, c(11,13,14,15,16,17,18)], use="complete.obs")
+
+# by looking at the results of the correlations between the tip_ampunt and the rest of the variables, it seems that the tip_amount has stronger correlations to these variables: fare_amount, payment_type, total_amount, congestion_surcharge, toll_amount, extra, DOLocationID . if I want to choose significant variables for predicting the tip_amount, we would choose are_amount, payment_type, total_amount, congestion_surcharge, toll_amount, extra, DOLocationID.
+```
+
 # Outliers
 
 ```{r}
 # Creating a data frame of z-score all values
 
+
+z_score <- as.data.frame(sapply(df[,9:18], function(z) (abs(z-mean(z))/sd(z))))
+=======
 numeric_var <- c("trip_distance", "fare_amount", "extra", "mta_tax" , "tip_amount", "tolls_amount", "total_amount")
 
 z_score <- as.data.frame(sapply(df[,numeric_var], function(z) (abs(z-mean(z))/sd(z))))
