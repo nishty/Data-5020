@@ -181,7 +181,9 @@ sum(is.na(df))
 ```{r}
 # Creating a data frame of z-score all values
 
-z_score <- as.data.frame(sapply(df[,9:19], function(z) (abs(z-mean(z))/sd(z))))
+numeric_var <- c("trip_distance", "fare_amount", "extra", "mta_tax" , "tip_amount", "tolls_amount", "total_amount")
+
+z_score <- as.data.frame(sapply(df[,numeric_var], function(z) (abs(z-mean(z))/sd(z))))
 #z_score$Outcome <- diabetes$Outcome
 #view(z_score)
 
