@@ -1,4 +1,65 @@
 ---
+title: "Practicum3"
+output: pdf_document
+date: '2022-05-01'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
+Skip to content
+Search or jump to…
+Pull requests
+Issues
+Marketplace
+Explore
+ 
+@nishty 
+ZahraKarimie
+/
+Data-5020
+Public
+Code
+Issues
+Pull requests
+Actions
+Projects
+Wiki
+Security
+Insights
+Data-5020/DA5020-P3.Rmd
+@ZahraKarimie
+ZahraKarimie Update DA5020-P3.Rmd
+Latest commit 1ce913b 11 minutes ago
+ History
+ 2 contributors
+@ZahraKarimie@yak-liu-NEU
+305 lines (227 sloc)  9.44 KB
+   
+---
 title: "R Notebook"
 output: html_notebook
 ---
@@ -36,50 +97,28 @@ summary(df)
 sapply(df,class)
 ```
 
-# Feature Engineering
-
-lpep_pickup_datetime and lpep_dropoff_datetime are used to generate the new feature 'air_time_min', by (lpep_pickup_datetime - lpep_dropoff_datetme) / 60.
-
-```{r}
-df = df %>%
-  mutate(
-    air_time_min = as.numeric(round((lpep_dropoff_datetime - lpep_pickup_datetime) / 60, 2))
-    ) %>%
-  select(-lpep_pickup_datetime, -lpep_dropoff_datetime)
-```
-
 # review the distribution of the continous variables (trip_distance, fare_amount)
 
 ```{r}
 #Overlaying the normal curve on the histogram of fare_amount
-
 ggplot(df,aes(x=fare_amount))+
   geom_histogram(aes(y=..density..))+
   stat_function(fun=dnorm, args = list(mean = mean(df$fare_amount),
   sd = sd(df$fare_amount)), colour ='red', size =1)
-
 skewness(df$fare_amount)
 # it shows that the far_amount is not normal and it is right skewed.
-
-
 #Overlaying the normal curve on the histogram of log10(trip_distance)
-
 ggplot(df,aes(x=log10(trip_distance)))+
   geom_histogram(aes(y=..density..))+
   stat_function(fun=dnorm, args = list(mean = log10(mean(df$trip_distance)),
   sd = log10(sd(df$trip_distance))), colour ='red', size =1)
-
 skewness(df$trip_distance)
 # it shows that the trip_distance is not normal at all and it is highly right skewed.
-
-
 #Overlaying the normal curve on the histogram of tip_amount
-
 ggplot(df,aes(x=tip_amount))+
   geom_histogram(aes(y=..density..))+
   stat_function(fun=dnorm, args = list(mean = mean(df$tip_amount),
   sd = sd(df$tip_amount)), colour ='red', size =1)
-
 skewness(df$tip_amount)
 # it shows that the tip_amount is not normal at all and it is highly right skewed
 ```
@@ -97,14 +136,9 @@ M <-cor(df[, -c(2,3,4)], use="complete.obs")
 corrplot(M, type="upper", order="hclust",
          col=brewer.pal(n=10, name="RdYlBu"))
 # from what we can see in the plot below, the payment_type and  mta_tax, and congestion_surcharge and PULocationID and Vender ID and extra and total_amount has stronger correlation in comepare to the rset of the variables. so I would choose them as feature variables. (payment_type and  mta_tax, and congestion_surcharge and PULocationID and Vender ID and extra and total_amount)
-
 cor(df$tip_amount, df[, c(1,5,6,7,8,9,10,11)], use="complete.obs")
-cor(df$tip_amount, df[, c(12,14,15,16,17,18)], use="complete.obs")
-
+cor(df$tip_amount, df[, c(12,14,15,16,17,18,19)], use="complete.obs")
 # by looking at the results of the correlations between the tip_ampunt and the rest of the variables, it seems that the tip_amount has stronger correlations to these variables: fare_amount, payment_type, total_amount, congestion_surcharge, toll_amount, extra, DOLocationID . if I want to choose significant variables for predicting the tip_amount, we would choose are_amount, payment_type, total_amount, congestion_surcharge, toll_amount, extra, DOLocationID. 
-
-
-
 ```
 
 # find coloumns (variables) contains missing values NA
@@ -114,148 +148,72 @@ cor(df$tip_amount, df[, c(12,14,15,16,17,18)], use="complete.obs")
 ```{r}
 for (col in colnames(df)) {
   if (any(is.na(df[,col]))) { 
-    print(col) 
-  } 
+  print(col) } 
 }
-
 # so by looking at the result, we can see that there are 8 variables, for each of these variables we will explore the data and handle the missing value. 
 # the 'ehail_fee' column is all NA and the column should be filter.
-
 # Vender ID variable 
 Vender_ID_missing <- sum(is.na(df$VendorID))
 table(df$VendorID)
 # there are 80893 observation that has missing value for Vender ID. Vender Id is a categorical variables that has 2 levels (1 & 2). as the number o missing value is high, it is not good idea to remove (dismiss) missing values. Instead as it is a categorical variable, we can replace NA with the most frequent value of that variable. in this case (2) is most frequent(265035 occurrence). so we will replace all NA with value 2. 
 df$VendorID[which(is.na(df$VendorID))] <- 2
-
-
-
 # "store_and_fwd_flag" variable - categorical variable with 2 levels Y&N mode of "N"
 store_and_fwd_flag_missing <- sum(is.na(df$store_and_fwd_flag))
 table(df$store_and_fwd_flag)
 df$store_and_fwd_flag[which(is.na(df$store_and_fwd_flag))] <- "N"
 table(df$store_and_fwd_flag)
-
 # "RatecodeID" variable - categorical variable with 7 levels (1,2,3,4,5,6,99) mode of 1
 RatecodeID_missing <- sum(is.na(df$RatecodeID))
 table(df$RatecodeID)
 df$RatecodeID[which(is.na(df$RatecodeID))] <- 1
 table(df$RatecodeID)
-
-
 # "passenger_count" variable - categorical variable with 9 levels (0:8), mode of 1
 passenger_count_missing <- sum(is.na(df$passenger_count))
 table(df$passenger_count)
 df$passenger_count[which(is.na(df$passenger_count))] <- 1
 table(df$passenger_count)
-
-
-
 # "payment_type" variable - categorical variable with 5 levels (1:5), mode of 1
 payment_type_missing <- sum(is.na(df$payment_type))
 table(df$payment_type)
 df$payment_type[which(is.na(df$payment_type))] <- 1
 table(df$payment_type)
-
 # "payment"trip_type" variable - categorical variable with 2 levels (1&2), mode of 1
 trip_type_missing <- sum(is.na(df$trip_type))
 table(df$trip_type)
 df$trip_type[which(is.na(df$trip_type))] <- 1
 table(df$trip_type)
-
 # "congestion_surcharge" variable - categorical variable with 4 levels (0, 0.75, 2.5, 2.75), mode of 0
 congestion_surcharge_missing <- sum(is.na(df$congestion_surcharge))
 table(df$congestion_surcharge)
 df$congestion_surcharge[which(is.na(df$congestion_surcharge))] <- 0
 table(df$congestion_surcharge)
-
 unique(df$ehail_fee)
 # the 'ehail_fee' coloumn is all NA and the coloumn should be filter. 
-# df = select(df, -ehail_fee)
-
+df = select(df, -ehail_fee)
 # check the clean df to see if there is any NA left. there is no missing value in the df. 
 sum(is.na(df))
-```
-
-# review the distribution of the continous variables (trip_distance, fare_amount)
-
-```{r}
-#Overlaying the normal curve on the histogram of fare_amount
-
-ggplot(df,aes(x=fare_amount))+
-  geom_histogram(aes(y=..density..))+
-  stat_function(fun=dnorm, args = list(mean = mean(df$fare_amount),
-  sd = sd(df$fare_amount)), colour ='red', size =1)
-
-skewness(df$fare_amount)
-# it shows that the far_amount is not normal and it is right skewed.
-
-
-#Overlaying the normal curve on the histogram of log10(trip_distance)
-
-ggplot(df,aes(x=log10(trip_distance)))+
-  geom_histogram(aes(y=..density..))+
-  stat_function(fun=dnorm, args = list(mean = log10(mean(df$trip_distance)),
-  sd = log10(sd(df$trip_distance))), colour ='red', size =1)
-
-skewness(df$trip_distance)
-# it shows that the trip_distance is not normal at all and it is highly right skewed.
-
-
-#Overlaying the normal curve on the histogram of tip_amount
-
-ggplot(df,aes(x=tip_amount))+
-  geom_histogram(aes(y=..density..))+
-  stat_function(fun=dnorm, args = list(mean = mean(df$tip_amount),
-  sd = sd(df$tip_amount)), colour ='red', size =1)
-
-skewness(df$tip_amount)
-# it shows that the tip_amount is not normal at all and it is highly right skewed
-```
-
-```{r}
-library(corrplot)
-library(RColorBrewer)
-M <-cor(df[, -c(2,3,4)], use="complete.obs")
-corrplot(M, type="upper", order="hclust",
-         col=brewer.pal(n=10, name="RdYlBu"))
-# from what we can see in the plot below, the payment_type and  mta_tax, and congestion_surcharge and PULocationID and Vender ID and extra and total_amount has stronger correlation in comepare to the rset of the variables. so I would choose them as feature variables. (payment_type and  mta_tax, and congestion_surcharge and PULocationID and Vender ID and extra and total_amount)
-
-cor(df$tip_amount, df[, c(1,5,6,7,8,9,10,11)], use="complete.obs")
-cor(df$tip_amount, df[, c(11,13,14,15,16,17,18)], use="complete.obs")
-
-# by looking at the results of the correlations between the tip_ampunt and the rest of the variables, it seems that the tip_amount has stronger correlations to these variables: fare_amount, payment_type, total_amount, congestion_surcharge, toll_amount, extra, DOLocationID . if I want to choose significant variables for predicting the tip_amount, we would choose are_amount, payment_type, total_amount, congestion_surcharge, toll_amount, extra, DOLocationID.
 ```
 
 # Outliers
 
 ```{r}
 # Creating a data frame of z-score all values
-
-
-z_score <- as.data.frame(sapply(df[,9:18], function(z) (abs(z-mean(z))/sd(z))))
-=======
-numeric_var <- c("trip_distance", "fare_amount", "extra", "mta_tax" , "tip_amount", "tolls_amount", "total_amount")
-
-z_score <- as.data.frame(sapply(df[,numeric_var], function(z) (abs(z-mean(z))/sd(z))))
+z_score <- as.data.frame(sapply(df[,9:19], function(z) (abs(z-mean(z))/sd(z))))
 #z_score$Outcome <- diabetes$Outcome
 #view(z_score)
-
 # Finding the outliers in each column ( values more than 3 sd)
 Outliers <- function(data){
   result <- which(abs(data)>3)
   length(result)
 }
-
 apply(z_score,2,Outliers)
 # showing the outliers in a boxplot
 ggplot(df,aes(y = df$tip_amount))+ geom_boxplot(outlier.color = 'red')
 ```
 
 ```{r}
-
 # we filter the variable "ehail" as it was all NA. in above by considering the result of the correlation between tip_amount and rest of the variables, we find out that variables "trip_distance", "fare_amount", "extra", "tip_amount", "tolls_amount" has stronger correlation and should be used for training a model. 
 #please see lines (80-90)
-
 ```
 
 # normalize the continous variables
@@ -263,14 +221,12 @@ ggplot(df,aes(y = df$tip_amount))+ geom_boxplot(outlier.color = 'red')
 ```{r}
 normalize <- function(x) {
 return((x - min(x)) / (max(x) - min(x))) }
-
 df$trip_distance <- normalize(df$trip_distance)
 df$tolls_amount <- normalize(df$tolls_amount)
 df$tip_amount <- normalize(df$tip_amount)
 df$fare_amount <- normalize(df$fare_amount)
 df$total_amount <- normalize(df$total_amount)
 df$extra <- normalize(df$extra)
-df$air_time_min <- normalize(df$air_time_min)
 summary(df)
 ```
 
@@ -279,7 +235,6 @@ summary(df)
 ```{r}
 df$store_and_fwd_flag <- as.numeric(factor(df$store_and_fwd_flag))
 table(df$store_and_fwd_flag)
-
 df$VendorID <- factor(df$VendorID)
 df$RatecodeID <- factor(df$RatecodeID)
 df$PULocationID <- factor(df$PULocationID)
@@ -296,72 +251,113 @@ df$congestion_surcharge <- factor(df$congestion_surcharge)
 
 ```{r}
 set.seed(7654) 
-train_split <- sample.int(n = nrow(df), size = floor(.80*nrow(df)), replace = F) 
-test_split <- sample.int(n = nrow(df), size = floor(.20*nrow(df)), replace = F) 
-train_Data <- df[train_split,] 
-test_Data <- df[test_split,] 
+trainsplit <- sample.int(n = nrow(df), size = floor(.80*nrow(df)), replace = F) 
+testsplit <- sample.int(n = nrow(df), size = floor(.20*nrow(df)), replace = F) 
+train_df <- df[trainsplit,] 
+test_df <- df[testsplit,] 
 # we think that to have 80% of the data for training purpose so we have enough data for training a good model. in a same time 20% for test is good number of tests and we can have a good evaluation as the data has total 398632 observations. this way we have enough data for both testing an training.
-```
 
+#trainData<-select(train_Data,-c(2,3))
+#trainData<-select(test_Data,-c(2,3))
+
+#head(trainData)
+# fare_amount, payment_type, total_amount, congestion_surcharge, toll_amount, extra, DOLocationID
+
+
+
+train_df<- train_df[, c('fare_amount', 'payment_type','tip_amount', 'total_amount','congestion_surcharge','tolls_amount','extra','DOLocationID')]
+
+test_df<- train_df[, c('fare_amount', 'payment_type','tip_amount', 'total_amount','congestion_surcharge','tolls_amount','extra','DOLocationID')]
+
+train_df <- train_df %>% 
+  mutate_all(as.numeric)
+
+test_df <- test_df %>% 
+  mutate_all(as.numeric)
+
+train_df <- mutate_all(train_df, function(x) as.numeric(x))
+test_df <- mutate_all(test_df, function(x) as.numeric(x))
+test_df
+
+head(train_df)
+```
 # Q3
 
-```{r}
 #Function Knn
+```{r}
 
-knn.predict <- function(data_train,data_test,predictor_var, k) {
+knn.predict <- function(df_train,df_test,predictor_var, k) {
 
 trainingRowIndex <- sample(1:nrow(df), 0.75*nrow(df))
-data_train <- df[trainingRowIndex, ] 
-data_test  <- df[-trainingRowIndex, ]
-dtrain.x <- data_train %>% select(-predictor_var)
-dtrain.y <- data_train %>% select(predictor_var) 
-dtest.x <- data_test %>% select(-predictor_var) 
-dtest.y <- data_test %>% select(predictor_var)
-pred.a <- FNN::knn.reg(dtrain.x, dtest.x, dtrain.y, k)
-dtest.y.results <- dtest.y
-dtest.y.results$k5.pred <- pred.a$pred
-rmse<-rmse(dtest.y.results$mpg,dtest.y.results$k5.pred)
+df_train <- df[trainingRowIndex, ] 
+df_test  <- df[-trainingRowIndex, ]
+df_train.x <- df_train %>% select(-predictor_var)
+df_train.y <- df_train %>% select(predictor_var) 
+df_test.x <- df_test %>% select(-predictor_var) 
+df_test.y <- df_test %>% select(predictor_var)
+pred.a <- FNN::knn.reg(df_train.x, df_test.x, df_train.y, k)
+df_test.y.results <- df_test.y
+df_test.y.results$k.pred <- pred.a$pred
+rmse<-rmse(df_test.y.results$mpg,df_test.y.results$k.pred)
 MSE<-(rmse)^2
 return(MSE)
 }
 
-knn.predict(data_train, data_test,'tip_amount',5)
-
+knn.predict(as.data.frame(train_df), as.data.frame(test_df),'tip_amount',5)
+test_df
 ```
 
-## Q4.
+
+
+## Q4. 
 
 Only logic is coded. Unavailable now.
 
 ### Determine the optimized parameter k
 
 ```{r}
-knn_tester = function(dtrain, dtest, pred_var, K){
+# create func to calc mse
+metric_mse = function(pred, ori){
+  t_t = cbind(pred, ori)
+  mse = sum((t_t[,1] - t_t[,2]) ** 2) / length(t_t)
+  return(mse)
+}
+knn_tester = function(x, Y, K){
   ret = vector()
   for(k in K){
-    mse = knn.predict(dtrain, dtest, 'tip_amount', k)
-    ret = c(ret, mse)
+    pred = knn.predict(x, k)
+    ret = c(ret, metric_mse(pred, Y))
   }
   return(ret)
 }
-
 k_center_sqrt = function(k, n, step){
   n = as.integer(n/2)
   return(
     seq(k-n, k+n, step)
   )
 }
-
 # calc mse for both train and test data with given list of k
 k_sqrt = sqrt(dim(train.x)[1])
 k = k_center_sqrt(k_sqrt, 20, 2)
-mse_train = knn_tester(train_Data, test_Data, 'tip_amount', k)
-mse_test = knn_tester(test_Data, test_Data, 'tip_amount', k)
+mse_train = knn_tester(train_x, train_y, k)
+mse_test = knn_tester(test_x, test_y, k)
 plot.data = tibble(K=k, mse_train, mse_test)
 plot.train.k = 
   ggplot(plot.data) + 
   geom_line(aes(x=K, y=mse_train)) + 
   geom_line(aes(x=K, y=mse_test))
   
-
 ```
+© 2022 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Docs
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About
+Loading complete
