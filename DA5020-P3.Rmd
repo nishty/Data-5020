@@ -36,6 +36,18 @@ summary(df)
 sapply(df,class)
 ```
 
+# Feature Engineering
+
+lpep_pickup_datetime and lpep_dropoff_datetime are used to generate the new feature 'air_time_min', by (lpep_pickup_datetime - lpep_dropoff_datetme) / 60.
+
+```{r}
+df = df %>%
+  mutate(
+    air_time_min = as.numeric(round((lpep_dropoff_datetime - lpep_pickup_datetime) / 60, 2))
+    ) %>%
+  select(-lpep_pickup_datetime, -lpep_dropoff_datetime)
+```
+
 # review the distribution of the continous variables (trip_distance, fare_amount)
 
 ```{r}
@@ -95,9 +107,9 @@ cor(df$tip_amount, df[, c(12,14,15,16,17,18,19)], use="complete.obs")
 
 ```{r}
 for (col in colnames(df)) {
-
   if (any(is.na(df[,col]))) { 
-  print(col) } 
+    print(col) 
+  } 
 }
 
 # so by looking at the result, we can see that there are 8 variables, for each of these variables we will explore the data and handle the missing value. 
@@ -197,8 +209,8 @@ df$tip_amount <- normalize(df$tip_amount)
 df$fare_amount <- normalize(df$fare_amount)
 df$total_amount <- normalize(df$total_amount)
 df$extra <- normalize(df$extra)
+df$air_time_min <- normalize(df$air_time_min)
 summary(df)
-
 ```
 
 # Encode the categorical varibales
@@ -229,8 +241,10 @@ train_Data <- df[train_split,]
 test_Data <- df[test_split,] 
 # we think that to have 80% of the data for training purpose so we have enough data for training a good model. in a same time 20% for test is good number of tests and we can have a good evaluation as the data has total 398632 observations. this way we have enough data for both testing an training.
 ```
+
 # Q3
 
+```{r}
 #Function Knn
 
 knn.predict <- function(data_train,data_test,predictor_var, k) {
@@ -238,10 +252,10 @@ knn.predict <- function(data_train,data_test,predictor_var, k) {
 trainingRowIndex <- sample(1:nrow(df), 0.75*nrow(df))
 data_train <- df[trainingRowIndex, ] 
 data_test  <- df[-trainingRowIndex, ]
-dtrain.x <- dtrain %>% select(-predictor_var)
-dtrain.y <- dtrain %>% select(predictor_var) 
-dtest.x <- dtest %>% select(-predictor_var) 
-dtest.y <- dtest %>% select(predictor_var)
+dtrain.x <- data_train %>% select(-predictor_var)
+dtrain.y <- data_train %>% select(predictor_var) 
+dtest.x <- data_test %>% select(-predictor_var) 
+dtest.y <- data_test %>% select(predictor_var)
 pred.a <- FNN::knn.reg(dtrain.x, dtest.x, dtrain.y, k)
 dtest.y.results <- dtest.y
 dtest.y.results$k5.pred <- pred.a$pred
@@ -250,28 +264,22 @@ MSE<-(rmse)^2
 return(MSE)
 }
 
-knn.predict(data_train, data_test,'mpg',5)
+knn.predict(data_train, data_test,'tip_amount',5)
 
+```
 
-## Q4. 
+## Q4.
 
 Only logic is coded. Unavailable now.
 
 ### Determine the optimized parameter k
 
 ```{r}
-# create func to calc mse
-metric_mse = function(pred, ori){
-  t_t = cbind(pred, ori)
-  mse = sum((t_t[,1] - t_t[,2]) ** 2) / length(t_t)
-  return(mse)
-}
-
-knn_tester = function(x, Y, K){
+knn_tester = function(dtrain, dtest, pred_var, K){
   ret = vector()
   for(k in K){
-    pred = knn.predict(x, k)
-    ret = c(ret, metric_mse(pred, Y))
+    mse = knn.predict(dtrain, dtest, 'tip_amount', k)
+    ret = c(ret, mse)
   }
   return(ret)
 }
@@ -284,11 +292,10 @@ k_center_sqrt = function(k, n, step){
 }
 
 # calc mse for both train and test data with given list of k
-
 k_sqrt = sqrt(dim(train.x)[1])
 k = k_center_sqrt(k_sqrt, 20, 2)
-mse_train = knn_tester(train_x, train_y, k)
-mse_test = knn_tester(test_x, test_y, k)
+mse_train = knn_tester(train_Data, test_Data, 'tip_amount', k)
+mse_test = knn_tester(test_Data, test_Data, 'tip_amount', k)
 plot.data = tibble(K=k, mse_train, mse_test)
 plot.train.k = 
   ggplot(plot.data) + 
