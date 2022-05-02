@@ -233,7 +233,7 @@ cor(df$tip_amount, df[, c(11,13,14,15,16,17,18)], use="complete.obs")
 
 
 z_score <- as.data.frame(sapply(df[,9:18], function(z) (abs(z-mean(z))/sd(z))))
-=======
+
 numeric_var <- c("trip_distance", "fare_amount", "extra", "mta_tax" , "tip_amount", "tolls_amount", "total_amount")
 
 z_score <- as.data.frame(sapply(df[,numeric_var], function(z) (abs(z-mean(z))/sd(z))))
@@ -249,6 +249,20 @@ Outliers <- function(data){
 apply(z_score,2,Outliers)
 # showing the outliers in a boxplot
 ggplot(df,aes(y = df$tip_amount))+ geom_boxplot(outlier.color = 'red')
+```
+
+```{r}
+
+# imputing the outliers , as the data is huge and number of outlier comapre to the dimension of the data is not that bug, we will remove all outliers from the data 
+Outliers_r <- function(data){
+  result <- which(abs(data)>3)
+  result
+}
+
+out <- apply(z_score,2,Outliers_r)
+dim(df)
+df <- df[- unlist(out),]
+dim(df)
 ```
 
 ```{r}
